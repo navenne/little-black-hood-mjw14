@@ -1,0 +1,26 @@
+{
+  "name": "malaga-jam-july-2022",
+  "version": "1.0.0",
+  "description": "Our entry for Málaga Jam Weekend 14 (Summer Edition)",
+  "type": "module",
+  "scripts": {
+    "dev": "esbuild src/game.ts --serve=3000 --servedir=public --bundle --sourcemap --target=es6 --define:__DEV__=true --outfile=public/bundle.js",
+    "prod": "esbuild src/game.ts --serve=3000 --servedir=public --bundle --minify --target=es6 --define:__DEV__=false --outfile=public/bundle.js",
+    "build": "esbuild src/game.ts --bundle --minify --target=es6 --define:__DEV__=false --outfile=public/bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/navenne/malaga-jam-july-2022.git"
+  },
+  "author": "@navenne / @Tach0ficial",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/navenne/malaga-jam-july-2022/issues"
+  },
+  "homepage": "https://github.com/navenne/malaga-jam-july-2022#readme",
+  "devDependencies": {
+    "esbuild": "^0.14.51",
+    "esbuild-serve": "^1.0.1",
+    "phaser": "^3.55.2"
+  }
+}
