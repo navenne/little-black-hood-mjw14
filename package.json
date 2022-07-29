@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "esbuild src/game.ts --serve=3000 --servedir=public --bundle --sourcemap --target=es6 --define:__DEV__=true --outfile=public/bundle.js",
+    "dev-live": "node esbuild.config.js -w",
     "prod": "esbuild src/game.ts --serve=3000 --servedir=public --bundle --minify --target=es6 --define:__DEV__=false --outfile=public/bundle.js",
     "build": "esbuild src/game.ts --bundle --minify --target=es6 --define:__DEV__=false --outfile=public/bundle.js"
   },
