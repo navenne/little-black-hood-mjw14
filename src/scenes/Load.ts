@@ -36,9 +36,11 @@ export default class Load extends Phaser.Scene {
 
     this.load.atlas("player", "assets/Character/player.png", "assets/Character/player.json");
 
-    this.load.image("inventory_bar", "assets/Inventory_Bar.png");
+    this.load.image("inventory_bar", "assets/Inventory/Inventory_Bar.png");
+    this.load.image("inventory_select", "assets/Inventory/Inventory_select.png");
 
     this.load.image("lapiz", "assets/Objects/lapiz.png");
+    this.load.image("lapi", "assets/Objects/lapiz.png");
   }
 
   private updateBar(value: number): void {

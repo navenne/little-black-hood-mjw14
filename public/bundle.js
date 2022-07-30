@@ -79492,6 +79492,7 @@
   var Hud = class extends Phaser.Scene {
     constructor() {
       super(constants_default.SCENES.HUD);
+      this.inventoryBarPositions = [];
     }
     init() {
       this.width = this.cameras.main.width;
@@ -79500,10 +79501,24 @@
       this.screenCenterY = this.cameras.main.worldView.y + this.height / 2;
     }
     create() {
-      this.add.image(this.screenCenterX, this.height - 150, "inventory_bar").setScale(2);
+      this.inventoryBar = this.add.image(this.renderer.width / 2, this.renderer.height * 0.85, "inventory_bar").setScale(2);
+      let slotWidth = this.inventoryBar.x - this.inventoryBar.width / 2 - 70;
       for (let i = 0; i < 10; i++) {
-        this.add.image(this.screenCenterX + i * 50, this.height - 150, "lapiz").setScale(2);
+        this.inventoryBarPositions.push([slotWidth, this.renderer.height * 0.85]);
+        slotWidth += 38;
       }
+      this.scene.get(constants_default.SCENES.MAIN).events.on("updateInventory", ({item, emptySlots}) => {
+        console.log(emptySlots);
+        const [x, y] = this.inventoryBarPositions[this.inventoryBarPositions.length - emptySlots];
+        this.add.image(x, y, item.name).setScale(1.5);
+      });
+      this.scene.get(constants_default.SCENES.MAIN).events.on("selectItem", (index) => {
+        if (this.slotSelected) {
+          this.slotSelected.destroy();
+        }
+        const [x, y] = this.inventoryBarPositions[index];
+        this.slotSelected = this.add.image(x, y, "inventory_select").setScale(2);
+      });
     }
   };
   var Hud_default = Hud;
@@ -79529,8 +79544,10 @@
       this.load.json(constants_default.FONTS.JSON, "assets/Fonts/font.json");
       this.load.image(constants_default.FONTS.IMAGE, "assets/Fonts/font.png");
       this.load.atlas("player", "assets/Character/player.png", "assets/Character/player.json");
-      this.load.image("inventory_bar", "assets/Inventory_Bar.png");
+      this.load.image("inventory_bar", "assets/Inventory/Inventory_Bar.png");
+      this.load.image("inventory_select", "assets/Inventory/Inventory_select.png");
       this.load.image("lapiz", "assets/Objects/lapiz.png");
+      this.load.image("lapi", "assets/Objects/lapiz.png");
     }
     updateBar(value) {
       this.progressBar.clear();
@@ -79607,7 +79624,16 @@
         return false;
       }
       this.inventory.push(Item);
+      this.scene.events.emit("updateInventory", {item: Item, emptySlots: this.getEmptySlots()});
       return true;
+    }
+    setItem(item) {
+      this.itemSelected = item;
+      this.scene.events.emit("selectItem", item);
+    }
+    getEmptySlots() {
+      console.log(this.inventory);
+      return 11 - this.inventory.length;
     }
   };
   var Player_default = Player;
@@ -79617,6 +79643,7 @@
     constructor() {
       super("MainScene");
       this.overlapLapiz = false;
+      this.overlapLapi = false;
     }
     init() {
       this.width = this.cameras.main.width;
@@ -79628,6 +79655,19 @@
     }
     create() {
       this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+      this.numbersKeys = this.input.keyboard.addKeys("ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,ZERO");
+      this.numbersKeysArray = [
+        this.numbersKeys.ONE,
+        this.numbersKeys.TWO,
+        this.numbersKeys.THREE,
+        this.numbersKeys.FOUR,
+        this.numbersKeys.FIVE,
+        this.numbersKeys.SIX,
+        this.numbersKeys.SEVEN,
+        this.numbersKeys.EIGHT,
+        this.numbersKeys.NINE,
+        this.numbersKeys.ZERO
+      ];
       this.mapLevel = this.make.tilemap({
         key: "mapa",
         tileWidth: 32,
@@ -79643,28 +79683,37 @@
       this.cameras.main.setBounds(0, 0, this.mapLevel.widthInPixels, this.mapLevel.heightInPixels);
       this.cameras.main.startFollow(this.player);
       this.physics.add.collider(this.player, this.layerParedesYSuelo);
-      let lapiz = this.mapLevel.createFromObjects("objetos", {
-        name: "lapiz"
+      this.createObjectInteractive("lapiz", "lapiz", "LAPIZ", this.lapizText, this.overlapLapiz);
+      this.createObjectInteractive("lapi", "lapi", "OTRO LAPIZ", this.lapiText, this.overlapLapi);
+    }
+    createObjectInteractive(name, texture, textToolTip, objText, overlap) {
+      let obj = this.mapLevel.createFromObjects("objetos", {
+        name
       })[0];
-      this.physics.world.enable(lapiz);
-      lapiz.body.setAllowGravity(false);
-      lapiz.setTexture("lapiz");
-      lapiz.body.setSize(16, 16);
-      this.physics.add.overlap(this.player, lapiz, () => {
-        if (!this.overlapLapiz) {
-          this.lapizText = this.add.bitmapText(lapiz.x, lapiz.y - 32, constants_default.FONTS.BITMAP, "LAPIZ").setOrigin(0.5);
-          this.overlapLapiz = true;
+      this.physics.world.enable(obj);
+      obj.body.setAllowGravity(false);
+      obj.setTexture(texture);
+      obj.body.setSize(16, 16);
+      this.physics.add.overlap(this.player, obj, () => {
+        if (!overlap) {
+          objText = this.add.bitmapText(obj.x, obj.y - 32, constants_default.FONTS.BITMAP, textToolTip).setOrigin(0.5);
+          overlap = true;
         }
         if (this.interactKey.isDown) {
-          if (this.player.addToInventory(lapiz)) {
-            lapiz.destroy();
-            this.lapizText.destroy();
+          if (this.player.addToInventory(obj)) {
+            obj.destroy();
+            objText.destroy();
           }
         }
       });
     }
     update() {
       this.player.update();
+      this.numbersKeysArray.map((key, index) => {
+        if (key.isDown) {
+          this.player.setItem(index);
+        }
+      });
     }
   };
   var MainScene_default = MainScene;

@@ -10,8 +10,12 @@ export default class MainScene extends Phaser.Scene {
   private layerParedesYSuelo: Phaser.Tilemaps.TilemapLayer;
   private player: Player;
   private interactKey: Phaser.Input.Keyboard.Key;
+  private numbersKeys: any;
+  private numbersKeysArray: any[];
   private overlapLapiz: boolean = false;
+  private overlapLapi: boolean = false;
   private lapizText: Phaser.GameObjects.BitmapText;
+  private lapiText: Phaser.GameObjects.BitmapText;
 
   private width: number;
   private height: number;
@@ -31,7 +35,20 @@ export default class MainScene extends Phaser.Scene {
 
   create() {
     this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-    // this.player = new Player({ scene: this, x: 200, y: 200 });
+    this.numbersKeys = this.input.keyboard.addKeys("ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,ZERO");
+    this.numbersKeysArray = [
+      this.numbersKeys.ONE,
+      this.numbersKeys.TWO,
+      this.numbersKeys.THREE,
+      this.numbersKeys.FOUR,
+      this.numbersKeys.FIVE,
+      this.numbersKeys.SIX,
+      this.numbersKeys.SEVEN,
+      this.numbersKeys.EIGHT,
+      this.numbersKeys.NINE,
+      this.numbersKeys.ZERO,
+    ];
+    // this.player = new Player({ scene: this, x: 500, y: 500 });
     //MAPA
     this.mapLevel = this.make.tilemap({
       key: "mapa",
@@ -45,15 +62,10 @@ export default class MainScene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, 0, this.mapLevel.widthInPixels, this.mapLevel.heightInPixels);
 
-    //MOQUETA
-    // this.moqueta = this.mapLevel.addTilesetImage("floors", "moquetaImg");
     //paredes y suelo
     this.paredesYSuelo = this.mapLevel.addTilesetImage("floors", "sueloImg");
-
-    // this.layerMoqueta = this.mapLevel.createLayer("moqueta", this.moqueta);
     this.layerParedesYSuelo = this.mapLevel.createLayer("capa", this.paredesYSuelo);
     this.layerParedesYSuelo.setCollisionByExclusion([-1]);
-    // this.layerMoqueta.setCollisionByExclusion([-1]);
 
     this.cameras.main.setBounds(0, 0, this.mapLevel.widthInPixels, this.mapLevel.heightInPixels);
 
@@ -64,25 +76,35 @@ export default class MainScene extends Phaser.Scene {
 
     //poner objeto de tiled en la scena
 
-    let lapiz: any = this.mapLevel.createFromObjects("objetos", {
-      name: "lapiz",
+    this.createObjectInteractive("lapiz", "lapiz", "LAPIZ", this.lapizText, this.overlapLapiz);
+    this.createObjectInteractive("lapi", "lapi", "OTRO LAPIZ", this.lapiText, this.overlapLapi);
+  }
+
+  private createObjectInteractive(
+    name: string,
+    texture: string,
+    textToolTip: string,
+    objText: Phaser.GameObjects.BitmapText,
+    overlap: boolean
+  ) {
+    let obj: any = this.mapLevel.createFromObjects("objetos", {
+      name,
     })[0];
-    this.physics.world.enable(lapiz);
-    lapiz.body.setAllowGravity(false);
-    lapiz.setTexture("lapiz");
-    lapiz.body.setSize(16, 16);
+    this.physics.world.enable(obj);
+    obj.body.setAllowGravity(false);
+    obj.setTexture(texture);
+    obj.body.setSize(16, 16);
 
-    this.physics.add.overlap(this.player, lapiz, () => {
+    this.physics.add.overlap(this.player, obj, () => {
       //tooltip
-
-      if (!this.overlapLapiz) {
-        this.lapizText = this.add.bitmapText(lapiz.x, lapiz.y - 32, constants.FONTS.BITMAP, "LAPIZ").setOrigin(0.5);
-        this.overlapLapiz = true;
+      if (!overlap) {
+        objText = this.add.bitmapText(obj.x, obj.y - 32, constants.FONTS.BITMAP, textToolTip).setOrigin(0.5);
+        overlap = true;
       }
       if (this.interactKey.isDown) {
-        if (this.player.addToInventory(lapiz)) {
-          lapiz.destroy();
-          this.lapizText.destroy();
+        if (this.player.addToInventory(obj)) {
+          obj.destroy();
+          objText.destroy();
         }
       }
     });
@@ -90,5 +112,11 @@ export default class MainScene extends Phaser.Scene {
 
   update() {
     this.player.update();
+
+    this.numbersKeysArray.map((key: any, index) => {
+      if (key.isDown) {
+        this.player.setItem(index);
+      }
+    });
   }
 }
