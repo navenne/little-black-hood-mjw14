@@ -79452,12 +79452,248 @@
   });
 
   // src/game.ts
+  var import_phaser5 = __toModule(require_phaser());
+
+  // src/scenes/Hud.ts
   var import_phaser = __toModule(require_phaser());
+
+  // src/constants.ts
+  var constants = {
+    START_LIVES: 3,
+    BACKGROUNDS: {
+      LEVEL1: "Brown"
+    },
+    EVENTS: {
+      ON_CHANGE_LIVE: "onChangeLive",
+      CLOCK: "clock"
+    },
+    SCENES: {
+      HUD: "Hud",
+      MENU: "Menu",
+      MAIN: "MainScene",
+      LOAD: "Load"
+    },
+    MAPS: {
+      MAIN: {
+        TILE_MAP_JSON: "map",
+        CAPA_MOQUETA: "moqueta",
+        CAPA_PAREDES: "paredesysuelo"
+      }
+    },
+    FONTS: {
+      JSON: "fontsJSON",
+      IMAGE: "font",
+      BITMAP: "fontsBitmapPixel"
+    }
+  };
+  var constants_default = constants;
+
+  // src/scenes/Hud.ts
+  var Hud = class extends Phaser.Scene {
+    constructor() {
+      super(constants_default.SCENES.HUD);
+    }
+    init() {
+      this.width = this.cameras.main.width;
+      this.height = this.cameras.main.height;
+      this.screenCenterX = this.cameras.main.worldView.x + this.width / 2;
+      this.screenCenterY = this.cameras.main.worldView.y + this.height / 2;
+    }
+    create() {
+      this.add.image(this.screenCenterX, this.height - 150, "inventory_bar").setScale(2);
+      for (let i = 0; i < 10; i++) {
+        this.add.image(this.screenCenterX + i * 50, this.height - 150, "lapiz").setScale(2);
+      }
+    }
+  };
+  var Hud_default = Hud;
+
+  // src/scenes/Load.ts
+  var import_phaser2 = __toModule(require_phaser());
+  var Load = class extends Phaser.Scene {
+    constructor() {
+      super("Load");
+    }
+    preload() {
+      this.cameras.main.setBackgroundColor(0);
+      this.createBars();
+      this.load.on("progress", (value) => {
+        this.updateBar(value);
+      });
+      this.load.on("complete", () => {
+        this.loadFont();
+        this.scene.start(constants_default.SCENES.MENU);
+      });
+      this.load.tilemapTiledJSON("mapa", "assets/levels/mapa.json");
+      this.load.image("sueloImg", "assets/levels/floors.png");
+      this.load.json(constants_default.FONTS.JSON, "assets/Fonts/font.json");
+      this.load.image(constants_default.FONTS.IMAGE, "assets/Fonts/font.png");
+      this.load.atlas("player", "assets/Character/player.png", "assets/Character/player.json");
+      this.load.image("inventory_bar", "assets/Inventory_Bar.png");
+      this.load.image("lapiz", "assets/Objects/lapiz.png");
+    }
+    updateBar(value) {
+      this.progressBar.clear();
+      this.progressBar.fillStyle(608, 1);
+      this.progressBar.fillRect(this.cameras.main.width / 4, this.cameras.main.height / 2 - 16, this.cameras.main.width / 2 * value, 16);
+    }
+    createBars() {
+      this.loadBar = this.add.graphics();
+      this.loadBar.fillStyle(16777215, 1);
+      this.loadBar.fillRect(this.cameras.main.width / 4 - 2, this.cameras.main.height / 2 - 18, this.cameras.main.width / 2 + 4, 20);
+      this.progressBar = this.add.graphics();
+    }
+    loadFont() {
+      const fontJson = this.cache.json.get(constants_default.FONTS.JSON);
+      this.cache.bitmapFont.add(constants_default.FONTS.BITMAP, Phaser.GameObjects.RetroFont.Parse(this, fontJson));
+    }
+  };
+  var Load_default = Load;
+
+  // src/objects/Player.ts
+  var import_phaser3 = __toModule(require_phaser());
+  var Player = class extends Phaser.Physics.Arcade.Sprite {
+    constructor(config2) {
+      super(config2.scene, config2.x, config2.y, "player");
+      this.scene = config2.scene;
+      this.scene.physics.world.enable(this);
+      this.scene.add.existing(this);
+      this.setScale(2);
+      this.body.setSize(this.width, this.height, true);
+      this.body.setOffset(0, -2);
+      this.setCollideWorldBounds(true);
+      this.cursors = this.scene.input.keyboard.createCursorKeys();
+      this.keysWASD = this.scene.input.keyboard.addKeys("W,A,S,D");
+      this.spaceBarKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+      this.anims.create({
+        key: "player-idle",
+        frames: this.anims.generateFrameNames("player", {prefix: "idle_", start: 1, end: 5}),
+        frameRate: 5,
+        repeat: -1
+      });
+      this.anims.create({
+        key: "player-run",
+        frames: this.anims.generateFrameNames("player", {prefix: "run_", start: 1, end: 5}),
+        frameRate: 10,
+        repeat: -1
+      });
+      this.play("player-idle");
+      this.inventory = [];
+    }
+    update() {
+      if (this.keysWASD.A.isDown || this.cursors.left.isDown) {
+        this.setVelocityX(-200);
+        this.setFlipX(true);
+        if (this.body.blocked.down) {
+          this.anims.play("player-run", true);
+        }
+      } else if (this.keysWASD.D.isDown || this.cursors.right.isDown) {
+        this.setVelocityX(200);
+        this.setFlipX(false);
+        if (this.body.blocked.down) {
+          this.anims.play("player-run", true);
+        }
+      } else {
+        this.setVelocityX(0);
+        this.anims.play("player-idle", true);
+      }
+      if ((this.spaceBarKey.isDown || this.cursors.up.isDown || this.keysWASD.W.isDown) && this.body.blocked.down) {
+        this.setVelocityY(-300);
+        this.anims.stop();
+      }
+    }
+    addToInventory(Item) {
+      if (this.inventory.find((item) => item.name === Item.name)) {
+        return false;
+      }
+      this.inventory.push(Item);
+      return true;
+    }
+  };
+  var Player_default = Player;
 
   // src/scenes/MainScene.ts
   var MainScene = class extends Phaser.Scene {
+    constructor() {
+      super("MainScene");
+      this.overlapLapiz = false;
+    }
+    init() {
+      this.width = this.cameras.main.width;
+      this.height = this.cameras.main.height;
+      this.screenCenterX = this.cameras.main.worldView.x + this.width / 2;
+      this.screenCenterY = this.cameras.main.worldView.y + this.height / 2;
+    }
+    preload() {
+    }
+    create() {
+      this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+      this.mapLevel = this.make.tilemap({
+        key: "mapa",
+        tileWidth: 32,
+        tileHeight: 32
+      });
+      this.mapLevel.findObject("player", (d) => {
+        this.player = new Player_default({scene: this, x: d.x, y: d.y});
+      });
+      this.physics.world.setBounds(0, 0, this.mapLevel.widthInPixels, this.mapLevel.heightInPixels);
+      this.paredesYSuelo = this.mapLevel.addTilesetImage("floors", "sueloImg");
+      this.layerParedesYSuelo = this.mapLevel.createLayer("capa", this.paredesYSuelo);
+      this.layerParedesYSuelo.setCollisionByExclusion([-1]);
+      this.cameras.main.setBounds(0, 0, this.mapLevel.widthInPixels, this.mapLevel.heightInPixels);
+      this.cameras.main.startFollow(this.player);
+      this.physics.add.collider(this.player, this.layerParedesYSuelo);
+      let lapiz = this.mapLevel.createFromObjects("objetos", {
+        name: "lapiz"
+      })[0];
+      this.physics.world.enable(lapiz);
+      lapiz.body.setAllowGravity(false);
+      lapiz.setTexture("lapiz");
+      lapiz.body.setSize(16, 16);
+      this.physics.add.overlap(this.player, lapiz, () => {
+        if (!this.overlapLapiz) {
+          this.lapizText = this.add.bitmapText(lapiz.x, lapiz.y - 32, constants_default.FONTS.BITMAP, "LAPIZ").setOrigin(0.5);
+          this.overlapLapiz = true;
+        }
+        if (this.interactKey.isDown) {
+          if (this.player.addToInventory(lapiz)) {
+            lapiz.destroy();
+            this.lapizText.destroy();
+          }
+        }
+      });
+    }
+    update() {
+      this.player.update();
+    }
   };
   var MainScene_default = MainScene;
+
+  // src/scenes/Menu.ts
+  var import_phaser4 = __toModule(require_phaser());
+  var Menu = class extends Phaser.Scene {
+    constructor() {
+      super("Menu");
+    }
+    init() {
+      this.width = this.cameras.main.width;
+      this.height = this.cameras.main.height;
+      this.screenCenterX = this.cameras.main.worldView.x + this.width / 2;
+      this.screenCenterY = this.cameras.main.worldView.y + this.height / 2;
+    }
+    create() {
+      this.playTxt = this.add.bitmapText(this.screenCenterX, this.screenCenterY, constants_default.FONTS.BITMAP, "PLAY", 25).setOrigin(0.5).setInteractive({cursor: "pointer"});
+      this.chageScene(this.playTxt, constants_default.SCENES.MAIN);
+    }
+    chageScene(playTxt, scene) {
+      playTxt.on("pointerdown", () => {
+        this.scene.start(scene);
+        this.scene.start(constants_default.SCENES.HUD);
+        this.scene.bringToTop(constants_default.SCENES.HUD);
+      });
+    }
+  };
+  var Menu_default = Menu;
 
   // src/config.ts
   var config = {
@@ -79475,9 +79711,15 @@
         height: 1200
       }
     },
+    physics: {
+      default: "arcade",
+      arcade: {
+        gravity: {y: 600},
+        debug: true
+      }
+    },
     pixelArt: true,
-    backgroundColor: "#125555",
-    scene: [MainScene_default]
+    scene: [Load_default, Menu_default, Hud_default, MainScene_default]
   };
   var config_default = config;
 

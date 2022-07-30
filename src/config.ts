@@ -1,4 +1,7 @@
+import Hud from "./scenes/Hud";
+import Load from "./scenes/Load";
 import MainScene from "./scenes/MainScene";
+import Menu from "./scenes/Menu";
 
 const config = {
   type: Phaser.AUTO,
@@ -15,9 +18,15 @@ const config = {
       height: 1200,
     },
   },
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 600 },
+      debug: true,
+    },
+  },
   pixelArt: true,
-  backgroundColor: "#125555",
-  scene: [MainScene],
+  scene: [Load, Menu, Hud, MainScene],
 };
 
 export default config;
