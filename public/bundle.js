@@ -79559,8 +79559,6 @@
       this.scene.physics.world.enable(this);
       this.scene.add.existing(this);
       this.setScale(2);
-      this.body.setSize(this.width, this.height, true);
-      this.body.setOffset(0, -2);
       this.setCollideWorldBounds(true);
       this.cursors = this.scene.input.keyboard.createCursorKeys();
       this.keysWASD = this.scene.input.keyboard.addKeys("W,A,S,D");
@@ -79574,13 +79572,14 @@
       this.anims.create({
         key: "player-run",
         frames: this.anims.generateFrameNames("player", {prefix: "run_", start: 1, end: 5}),
-        frameRate: 10,
+        frameRate: 5,
         repeat: -1
       });
       this.play("player-idle");
       this.inventory = [];
     }
     update() {
+      this.body.setSize(this.width, this.height);
       if (this.keysWASD.A.isDown || this.cursors.left.isDown) {
         this.setVelocityX(-200);
         this.setFlipX(true);

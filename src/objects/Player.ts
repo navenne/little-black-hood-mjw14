@@ -16,8 +16,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.add.existing(this);
 
     this.setScale(2);
-    this.body.setSize(this.width, this.height, true);
-    this.body.setOffset(0, -2);
     this.setCollideWorldBounds(true); // para que no se salga del juego :)
 
     this.cursors = this.scene.input.keyboard.createCursorKeys();
@@ -33,7 +31,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.anims.create({
       key: "player-run",
       frames: this.anims.generateFrameNames("player", { prefix: "run_", start: 1, end: 5 }),
-      frameRate: 10,
+      frameRate: 5,
       repeat: -1,
     });
 
@@ -43,6 +41,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update() {
+    this.body.setSize(this.width, this.height);
     if (this.keysWASD.A.isDown || this.cursors.left.isDown) {
       this.setVelocityX(-200);
       this.setFlipX(true);
