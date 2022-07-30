@@ -6,6 +6,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private keysWASD: any;
   private spaceBarKey: Phaser.Input.Keyboard.Key;
+  private itemSelected: number;
 
   public scene: Phaser.Scene;
 
@@ -70,6 +71,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       return false;
     }
     this.inventory.push(Item);
+    this.scene.events.emit("updateInventory", { item: Item, emptySlots: this.getEmptySlots() });
     return true;
+  }
+
+  public setItem(item: any) {
+    this.itemSelected = item;
+
+    //agregar el objeto al jugador en la mano
+    this.scene.events.emit("selectItem", item);
+  }
+  private getEmptySlots(): number {
+    console.log(this.inventory);
+    return 11 - this.inventory.length;
   }
 }

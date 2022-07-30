@@ -8,6 +8,9 @@ export default class Hud extends Phaser.Scene {
   private height: number;
 
   private inventoryBar: Phaser.GameObjects.Image;
+  private slotSelected: Phaser.GameObjects.Image;
+
+  private inventoryBarPositions: [number, number][] = [];
 
   constructor() {
     super(constants.SCENES.HUD);
@@ -21,10 +24,27 @@ export default class Hud extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(this.screenCenterX, this.height - 150, "inventory_bar").setScale(2);
-    //split inventory bar into 10 slots
+    this.inventoryBar = this.add
+      .image(this.renderer.width / 2, this.renderer.height * 0.85, "inventory_bar")
+      .setScale(2);
+    let slotWidth = this.inventoryBar.x - this.inventoryBar.width / 2 - 70;
     for (let i = 0; i < 10; i++) {
-      this.add.image(this.screenCenterX + i * 50, this.height - 150, "lapiz").setScale(2);
+      this.inventoryBarPositions.push([slotWidth, this.renderer.height * 0.85]);
+      slotWidth += 38;
     }
+
+    this.scene.get(constants.SCENES.MAIN).events.on("updateInventory", ({ item, emptySlots }) => {
+      console.log(emptySlots);
+      const [x, y] = this.inventoryBarPositions[this.inventoryBarPositions.length - emptySlots];
+      this.add.image(x, y, item.name).setScale(1.5);
+    });
+
+    this.scene.get(constants.SCENES.MAIN).events.on("selectItem", (index) => {
+      if (this.slotSelected) {
+        this.slotSelected.destroy();
+      }
+      const [x, y] = this.inventoryBarPositions[index];
+      this.slotSelected = this.add.image(x, y, "inventory_select").setScale(2);
+    });
   }
 }
