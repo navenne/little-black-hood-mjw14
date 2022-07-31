@@ -39,6 +39,7 @@ export default class MainScene extends Phaser.Scene {
   private height: number;
   rtFOV: Phaser.GameObjects.RenderTexture;
   vision: any;
+  private collitionWithDoor: boolean = false;
 
   constructor() {
     super("MainScene");
@@ -181,9 +182,7 @@ export default class MainScene extends Phaser.Scene {
       this.taburete.y = 975;
       this.player.x = this.taburete.x;
       this.player.y = this.taburete.y - 100;
-      if (!this.player.inventory.find((item: any) => item.name === "escobilla")) {
-        this.newDialog("NO ALCANZO LA CUERDA");
-      }
+      this.newDialog("NO ALCANZO LA CUERDA");
     });
 
     this.events.on("useEscobilla", () => {
@@ -283,6 +282,9 @@ export default class MainScene extends Phaser.Scene {
           if (obj.name === "lapiz") {
             this.lapizTaken = true;
           }
+          if (obj.name === "escobilla") {
+            this.newDialog("ANDA UNA ESPATULA \nDE PASTA...QUE ASCO");
+          }
           obj.setVisible(false);
           objText.destroy();
         }
@@ -301,7 +303,7 @@ export default class MainScene extends Phaser.Scene {
       }
     });
 
-    const overlap = this.physics.overlapRect(
+    const overlap: any = this.physics.overlapRect(
       this.player.x - 25,
       this.player.y - 25,
       this.player.width + 5,
@@ -338,6 +340,17 @@ export default class MainScene extends Phaser.Scene {
       if (overlap.includes(this.alfombra.body)) {
         this.physics.world.removeCollider(this.colliderPlayerAlfombra);
       }
+    }
+
+    if (
+      this.player.x > 350 &&
+      this.player.x < 386 &&
+      this.player.y < 1130 &&
+      this.player.y > 1007 &&
+      !this.collitionWithDoor
+    ) {
+      this.collitionWithDoor = true;
+      this.newDialog("ESTA PUERTA ESTA CERRADA \n TENDRE QUE BUSCAR \n OTRO CAMINO");
     }
   }
   private finalScene() {

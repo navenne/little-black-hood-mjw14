@@ -54,6 +54,7 @@ export default class Load extends Phaser.Scene {
     this.load.image("finalTitle", "assets/Title/finalTitle.png");
     this.load.image("textFinal", "assets/Title/textFinal.png");
     this.load.image("fov", "assets/fov.png");
+    this.load.image("wasd", "assets/WASD.png");
     this.load.audio("doorOpen", "assets/Music/door_open.wav");
     this.load.audio("killSwitch", "assets/Music/kill_switch.wav");
     this.load.audio("scream", "assets/Music/scream.wav");

@@ -44,13 +44,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   update() {
     this.body.setSize(this.width - 10, this.height);
     if (this.keysWASD.A.isDown || this.cursors.left.isDown) {
-      this.setVelocityX(-100);
+      this.setVelocityX(-60);
       this.setFlipX(true);
       if (this.body.blocked.down) {
         this.anims.play("player-run", true);
       }
     } else if (this.keysWASD.D.isDown || this.cursors.right.isDown) {
-      this.setVelocityX(100);
+      this.setVelocityX(60);
       this.setFlipX(false);
       if (this.body.blocked.down) {
         this.anims.play("player-run", true);

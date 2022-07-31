@@ -79503,6 +79503,7 @@
     }
     create() {
       this.inventoryBar = this.add.image(this.renderer.width / 2, this.renderer.height * 0.85, "inventory_bar").setScale(2);
+      this.wasd = this.add.image(this.inventoryBar.x + this.inventoryBar.width / 2 + 180, this.inventoryBar.y, "wasd").setScale(0.1);
       let slotWidth = this.inventoryBar.x - this.inventoryBar.width / 2 - 70;
       for (let i = 0; i < 10; i++) {
         this.inventoryBarPositions.push([slotWidth, this.renderer.height * 0.85]);
@@ -79529,6 +79530,10 @@
         }
         this.dialogImg = this.add.image(this.screenCenterX, this.renderer.height * 0.75, "dialogPanel").setScale(2);
         this.dialogTxt = this.add.bitmapText(this.dialogImg.x - this.dialogImg.width / 2 - 30, this.renderer.height * 0.72, constants_default.FONTS.BITMAP, text);
+        setTimeout(() => {
+          this.dialogImg.destroy();
+          this.dialogTxt.destroy();
+        }, 5e3);
       });
       this.scene.get(constants_default.SCENES.MAIN).events.on("deleteDialog", () => {
         if (this.dialogImg) {
@@ -79540,6 +79545,7 @@
       });
       this.scene.get(constants_default.SCENES.MAIN).events.on("hideHud", () => {
         this.inventoryBar.destroy();
+        this.wasd.destroy();
         if (this.slotSelected) {
           this.slotSelected.destroy();
         }
@@ -79597,6 +79603,7 @@
       this.load.image("finalTitle", "assets/Title/finalTitle.png");
       this.load.image("textFinal", "assets/Title/textFinal.png");
       this.load.image("fov", "assets/fov.png");
+      this.load.image("wasd", "assets/WASD.png");
       this.load.audio("doorOpen", "assets/Music/door_open.wav");
       this.load.audio("killSwitch", "assets/Music/kill_switch.wav");
       this.load.audio("scream", "assets/Music/scream.wav");
@@ -79653,13 +79660,13 @@
     update() {
       this.body.setSize(this.width - 10, this.height);
       if (this.keysWASD.A.isDown || this.cursors.left.isDown) {
-        this.setVelocityX(-100);
+        this.setVelocityX(-60);
         this.setFlipX(true);
         if (this.body.blocked.down) {
           this.anims.play("player-run", true);
         }
       } else if (this.keysWASD.D.isDown || this.cursors.right.isDown) {
-        this.setVelocityX(100);
+        this.setVelocityX(60);
         this.setFlipX(false);
         if (this.body.blocked.down) {
           this.anims.play("player-run", true);
@@ -79709,6 +79716,7 @@
       this.doors = [];
       this.lapizTaken = false;
       this.mesaMoved = false;
+      this.collitionWithDoor = false;
     }
     init() {
       this.width = this.cameras.main.width;
@@ -79817,9 +79825,7 @@
         this.taburete.y = 975;
         this.player.x = this.taburete.x;
         this.player.y = this.taburete.y - 100;
-        if (!this.player.inventory.find((item) => item.name === "escobilla")) {
-          this.newDialog("NO ALCANZO LA CUERDA");
-        }
+        this.newDialog("NO ALCANZO LA CUERDA");
       });
       this.events.on("useEscobilla", () => {
         if (this.player.body.touching.down && this.taburete.body.touching.up) {
@@ -79889,6 +79895,9 @@
             if (obj.name === "lapiz") {
               this.lapizTaken = true;
             }
+            if (obj.name === "escobilla") {
+              this.newDialog("ANDA UNA ESPATULA \nDE PASTA...QUE ASCO");
+            }
             obj.setVisible(false);
             objText.destroy();
           }
@@ -79931,6 +79940,10 @@
         if (overlap.includes(this.alfombra.body)) {
           this.physics.world.removeCollider(this.colliderPlayerAlfombra);
         }
+      }
+      if (this.player.x > 350 && this.player.x < 386 && this.player.y < 1130 && this.player.y > 1007 && !this.collitionWithDoor) {
+        this.collitionWithDoor = true;
+        this.newDialog("ESTA PUERTA ESTA CERRADA \n TENDRE QUE BUSCAR \n OTRO CAMINO");
       }
     }
     finalScene() {

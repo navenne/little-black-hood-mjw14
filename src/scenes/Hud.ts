@@ -9,6 +9,7 @@ export default class Hud extends Phaser.Scene {
 
   private inventoryBar: Phaser.GameObjects.Image;
   private slotSelected: Phaser.GameObjects.Image;
+  private wasd: Phaser.GameObjects.Image;
 
   private dialogImg: Phaser.GameObjects.Image;
   private dialogTxt: Phaser.GameObjects.BitmapText;
@@ -31,6 +32,11 @@ export default class Hud extends Phaser.Scene {
     this.inventoryBar = this.add
       .image(this.renderer.width / 2, this.renderer.height * 0.85, "inventory_bar")
       .setScale(2);
+
+    this.wasd = this.add
+      .image(this.inventoryBar.x + this.inventoryBar.width / 2 + 180, this.inventoryBar.y, "wasd")
+      .setScale(0.1);
+
     let slotWidth = this.inventoryBar.x - this.inventoryBar.width / 2 - 70;
     for (let i = 0; i < 10; i++) {
       this.inventoryBarPositions.push([slotWidth, this.renderer.height * 0.85]);
@@ -65,6 +71,11 @@ export default class Hud extends Phaser.Scene {
         constants.FONTS.BITMAP,
         text
       );
+
+      setTimeout(() => {
+        this.dialogImg.destroy();
+        this.dialogTxt.destroy();
+      }, 5000);
     });
 
     this.scene.get(constants.SCENES.MAIN).events.on("deleteDialog", () => {
@@ -78,6 +89,7 @@ export default class Hud extends Phaser.Scene {
 
     this.scene.get(constants.SCENES.MAIN).events.on("hideHud", () => {
       this.inventoryBar.destroy();
+      this.wasd.destroy();
       if (this.slotSelected) {
         this.slotSelected.destroy();
       }
