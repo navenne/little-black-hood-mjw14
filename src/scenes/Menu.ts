@@ -23,6 +23,9 @@ export default class Menu extends Phaser.Scene {
   }
 
   create() {
+    this.sound.play("soundtrack", { loop: true });
+    this.add.image(this.screenCenterX, this.screenCenterY - 150, "title");
+
     this.playTxt = this.add
       .bitmapText(this.screenCenterX, this.screenCenterY, constants.FONTS.BITMAP, "PLAY", 25)
       .setOrigin(0.5)
@@ -36,6 +39,7 @@ export default class Menu extends Phaser.Scene {
       this.scene.start(scene);
       this.scene.start(constants.SCENES.HUD);
       this.scene.bringToTop(constants.SCENES.HUD);
+      this.sound.stopAll();
     });
   }
 }

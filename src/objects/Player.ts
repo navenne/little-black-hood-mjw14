@@ -2,7 +2,7 @@ import "phaser";
 import constants from "../constants";
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-  private inventory: any[];
+  public inventory: any[];
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private keysWASD: any;
   private spaceBarKey: Phaser.Input.Keyboard.Key;
@@ -16,7 +16,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.physics.world.enable(this);
     this.scene.add.existing(this);
 
-    this.setScale(2);
+    this.setScale(1);
     this.setCollideWorldBounds(true); // para que no se salga del juego :)
 
     this.cursors = this.scene.input.keyboard.createCursorKeys();
@@ -42,15 +42,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   update() {
-    this.body.setSize(this.width, this.height);
+    this.body.setSize(this.width - 10, this.height);
     if (this.keysWASD.A.isDown || this.cursors.left.isDown) {
-      this.setVelocityX(-200);
+      this.setVelocityX(-100);
       this.setFlipX(true);
       if (this.body.blocked.down) {
         this.anims.play("player-run", true);
       }
     } else if (this.keysWASD.D.isDown || this.cursors.right.isDown) {
-      this.setVelocityX(200);
+      this.setVelocityX(100);
       this.setFlipX(false);
       if (this.body.blocked.down) {
         this.anims.play("player-run", true);
@@ -78,6 +78,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   public setItem(item: any) {
     this.itemSelected = item;
 
+    //use item
+    if (this.inventory[item]) {
+      if (this.inventory[item].name === "taburete") {
+        this.scene.events.emit("useTaburete");
+      } else if (this.inventory[item].name === "escobilla") {
+        this.scene.events.emit("useEscobilla");
+      }
+    }
     //agregar el objeto al jugador en la mano
     this.scene.events.emit("selectItem", item);
   }

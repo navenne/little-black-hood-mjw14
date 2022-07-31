@@ -29,7 +29,7 @@ export default class Load extends Phaser.Scene {
     this.load.tilemapTiledJSON("mapa", "assets/levels/mapa.json");
 
     this.load.image("sueloImg", "assets/levels/floors.png");
-    // this.load.image("paredesImg", "assets/levels/moqueta.png");
+    this.load.image("furnisImg", "assets/levels/furnis.png");
 
     this.load.json(constants.FONTS.JSON, "assets/Fonts/font.json");
     this.load.image(constants.FONTS.IMAGE, "assets/Fonts/font.png");
@@ -41,6 +41,25 @@ export default class Load extends Phaser.Scene {
 
     this.load.image("lapiz", "assets/Objects/lapiz.png");
     this.load.image("lapi", "assets/Objects/lapiz.png");
+
+    this.load.image("doorClose", "assets/Objects/doorClose.png");
+    this.load.image("doorOpen", "assets/Objects/doorOpen.png");
+
+    this.load.image("title", "assets/Title/titleWhite.png");
+    this.load.image("dialogPanel", "assets/dialogPanel.png");
+    this.load.image("mesa", "assets/Objects/mesa.png");
+    this.load.image("alfombra", "assets/Objects/alfombra.png");
+    this.load.image("taburete", "assets/Objects/taburete.png");
+    this.load.image("escobilla", "assets/Objects/escobilla.png");
+    this.load.image("finalTitle", "assets/Title/finalTitle.png");
+    this.load.image("textFinal", "assets/Title/textFinal.png");
+    this.load.image("fov", "assets/fov.png");
+    this.load.audio("doorOpen", "assets/Music/door_open.wav");
+    this.load.audio("killSwitch", "assets/Music/kill_switch.wav");
+    this.load.audio("scream", "assets/Music/scream.wav");
+    this.load.audio("soundtrack", "assets/Music/soundtrack.wav");
+    this.load.audio("scaryAmbience", "assets/Music/scary_ambience.wav");
+    this.load.audio("doorClose", "assets/Music/door_close.wav");
   }
 
   private updateBar(value: number): void {

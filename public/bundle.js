@@ -79493,6 +79493,7 @@
     constructor() {
       super(constants_default.SCENES.HUD);
       this.inventoryBarPositions = [];
+      this.itemsImgs = [];
     }
     init() {
       this.width = this.cameras.main.width;
@@ -79510,7 +79511,7 @@
       this.scene.get(constants_default.SCENES.MAIN).events.on("updateInventory", ({item, emptySlots}) => {
         console.log(emptySlots);
         const [x, y] = this.inventoryBarPositions[this.inventoryBarPositions.length - emptySlots];
-        this.add.image(x, y, item.name).setScale(1.5);
+        this.itemsImgs.push(this.add.image(x, y, item.name).setScale(1.5));
       });
       this.scene.get(constants_default.SCENES.MAIN).events.on("selectItem", (index) => {
         if (this.slotSelected) {
@@ -79518,6 +79519,42 @@
         }
         const [x, y] = this.inventoryBarPositions[index];
         this.slotSelected = this.add.image(x, y, "inventory_select").setScale(2);
+      });
+      this.scene.get(constants_default.SCENES.MAIN).events.on("newDialog", (text) => {
+        if (this.dialogImg) {
+          this.dialogImg.destroy();
+        }
+        if (this.dialogTxt) {
+          this.dialogTxt.destroy();
+        }
+        this.dialogImg = this.add.image(this.screenCenterX, this.renderer.height * 0.75, "dialogPanel").setScale(2);
+        this.dialogTxt = this.add.bitmapText(this.dialogImg.x - this.dialogImg.width / 2 - 30, this.renderer.height * 0.72, constants_default.FONTS.BITMAP, text);
+      });
+      this.scene.get(constants_default.SCENES.MAIN).events.on("deleteDialog", () => {
+        if (this.dialogImg) {
+          this.dialogImg.destroy();
+        }
+        if (this.dialogTxt) {
+          this.dialogTxt.destroy();
+        }
+      });
+      this.scene.get(constants_default.SCENES.MAIN).events.on("hideHud", () => {
+        this.inventoryBar.destroy();
+        if (this.slotSelected) {
+          this.slotSelected.destroy();
+        }
+        if (this.dialogImg) {
+          this.dialogImg.destroy();
+        }
+        if (this.dialogTxt) {
+          this.dialogTxt.destroy();
+        }
+        setTimeout(() => {
+          this.add.image(this.screenCenterX, this.screenCenterY - 100, "finalTitle");
+          this.add.image(this.screenCenterX, this.screenCenterY, "textFinal").setScale(0.5);
+          this.itemsImgs.forEach((item) => item.destroy());
+          this.sound.play("soundtrack", {loop: true});
+        }, 3e3);
       });
     }
   };
@@ -79541,6 +79578,7 @@
       });
       this.load.tilemapTiledJSON("mapa", "assets/levels/mapa.json");
       this.load.image("sueloImg", "assets/levels/floors.png");
+      this.load.image("furnisImg", "assets/levels/furnis.png");
       this.load.json(constants_default.FONTS.JSON, "assets/Fonts/font.json");
       this.load.image(constants_default.FONTS.IMAGE, "assets/Fonts/font.png");
       this.load.atlas("player", "assets/Character/player.png", "assets/Character/player.json");
@@ -79548,6 +79586,23 @@
       this.load.image("inventory_select", "assets/Inventory/Inventory_select.png");
       this.load.image("lapiz", "assets/Objects/lapiz.png");
       this.load.image("lapi", "assets/Objects/lapiz.png");
+      this.load.image("doorClose", "assets/Objects/doorClose.png");
+      this.load.image("doorOpen", "assets/Objects/doorOpen.png");
+      this.load.image("title", "assets/Title/titleWhite.png");
+      this.load.image("dialogPanel", "assets/dialogPanel.png");
+      this.load.image("mesa", "assets/Objects/mesa.png");
+      this.load.image("alfombra", "assets/Objects/alfombra.png");
+      this.load.image("taburete", "assets/Objects/taburete.png");
+      this.load.image("escobilla", "assets/Objects/escobilla.png");
+      this.load.image("finalTitle", "assets/Title/finalTitle.png");
+      this.load.image("textFinal", "assets/Title/textFinal.png");
+      this.load.image("fov", "assets/fov.png");
+      this.load.audio("doorOpen", "assets/Music/door_open.wav");
+      this.load.audio("killSwitch", "assets/Music/kill_switch.wav");
+      this.load.audio("scream", "assets/Music/scream.wav");
+      this.load.audio("soundtrack", "assets/Music/soundtrack.wav");
+      this.load.audio("scaryAmbience", "assets/Music/scary_ambience.wav");
+      this.load.audio("doorClose", "assets/Music/door_close.wav");
     }
     updateBar(value) {
       this.progressBar.clear();
@@ -79575,7 +79630,7 @@
       this.scene = config2.scene;
       this.scene.physics.world.enable(this);
       this.scene.add.existing(this);
-      this.setScale(2);
+      this.setScale(1);
       this.setCollideWorldBounds(true);
       this.cursors = this.scene.input.keyboard.createCursorKeys();
       this.keysWASD = this.scene.input.keyboard.addKeys("W,A,S,D");
@@ -79596,15 +79651,15 @@
       this.inventory = [];
     }
     update() {
-      this.body.setSize(this.width, this.height);
+      this.body.setSize(this.width - 10, this.height);
       if (this.keysWASD.A.isDown || this.cursors.left.isDown) {
-        this.setVelocityX(-200);
+        this.setVelocityX(-100);
         this.setFlipX(true);
         if (this.body.blocked.down) {
           this.anims.play("player-run", true);
         }
       } else if (this.keysWASD.D.isDown || this.cursors.right.isDown) {
-        this.setVelocityX(200);
+        this.setVelocityX(100);
         this.setFlipX(false);
         if (this.body.blocked.down) {
           this.anims.play("player-run", true);
@@ -79628,6 +79683,13 @@
     }
     setItem(item) {
       this.itemSelected = item;
+      if (this.inventory[item]) {
+        if (this.inventory[item].name === "taburete") {
+          this.scene.events.emit("useTaburete");
+        } else if (this.inventory[item].name === "escobilla") {
+          this.scene.events.emit("useEscobilla");
+        }
+      }
       this.scene.events.emit("selectItem", item);
     }
     getEmptySlots() {
@@ -79642,7 +79704,11 @@
     constructor() {
       super("MainScene");
       this.overlapLapiz = false;
-      this.overlapLapi = false;
+      this.overlapEscobilla = false;
+      this.overlapTaburete = false;
+      this.doors = [];
+      this.lapizTaken = false;
+      this.mesaMoved = false;
     }
     init() {
       this.width = this.cameras.main.width;
@@ -79653,6 +79719,9 @@
     preload() {
     }
     create() {
+      this.sound.add("scaryAmbience").play({loop: true, volume: 0.5});
+      this.sound.add("doorClose").play();
+      this.cameras.main.zoom = 1.5;
       this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
       this.numbersKeys = this.input.keyboard.addKeys("ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,ZERO");
       this.numbersKeysArray = [
@@ -79672,18 +79741,126 @@
         tileWidth: 32,
         tileHeight: 32
       });
+      this.tileSetFloors = this.mapLevel.addTilesetImage("floors", "sueloImg");
+      this.tileSetFurnis = this.mapLevel.addTilesetImage("furnis", "furnisImg");
+      this.layerFondo = this.mapLevel.createLayer("fondo", this.tileSetFloors);
+      this.layerFurnis = this.mapLevel.createLayer("furnis", this.tileSetFurnis);
+      this.layerSuelo = this.mapLevel.createLayer("suelo", [this.tileSetFloors, this.tileSetFurnis]);
+      this.layerTunel = this.mapLevel.createLayer("tunel", this.tileSetFloors);
+      this.layerTunel.setCollisionByExclusion([-1]);
+      this.layerFurnis.setCollisionByExclusion([-1]);
+      this.layerSuelo.setCollisionByExclusion([-1]);
+      this.layerFondo.setCollisionByExclusion([-1]);
       this.mapLevel.findObject("player", (d) => {
         this.player = new Player_default({scene: this, x: d.x, y: d.y});
       });
       this.physics.world.setBounds(0, 0, this.mapLevel.widthInPixels, this.mapLevel.heightInPixels);
-      this.paredesYSuelo = this.mapLevel.addTilesetImage("floors", "sueloImg");
-      this.layerParedesYSuelo = this.mapLevel.createLayer("capa", this.paredesYSuelo);
-      this.layerParedesYSuelo.setCollisionByExclusion([-1]);
       this.cameras.main.setBounds(0, 0, this.mapLevel.widthInPixels, this.mapLevel.heightInPixels);
       this.cameras.main.startFollow(this.player);
-      this.physics.add.collider(this.player, this.layerParedesYSuelo);
+      this.physics.add.collider(this.player, this.layerSuelo);
       this.createObjectInteractive("lapiz", "lapiz", "LAPIZ", this.lapizText, this.overlapLapiz);
-      this.createObjectInteractive("lapi", "lapi", "OTRO LAPIZ", this.lapiText, this.overlapLapi);
+      this.createObjectInteractive("escobilla", "escobilla", "ESCOBILLA", this.escobillaText, this.overlapEscobilla);
+      this.createObjectInteractive("taburete", "taburete", "TABURETE", this.tabureteText, this.overlapTaburete);
+      for (let i = 1; i <= 4; i++) {
+        this.createDoorInteractive(`puerta_${i}`);
+      }
+      this.mesa = this.mapLevel.createFromObjects("objetos", {
+        name: "mesa"
+      })[0];
+      this.physics.world.enable(this.mesa);
+      this.mesa.body.setAllowGravity(false);
+      this.mesa.body.setImmovable(true);
+      this.mesa.setTexture("mesa");
+      this.mesa.body.setSize(22, 16);
+      this.physics.add.collider(this.layerSuelo, this.mesa);
+      this.alfombra = this.mapLevel.createFromObjects("objetos", {
+        name: "alfombra"
+      })[0];
+      this.physics.world.enable(this.alfombra);
+      this.alfombra.body.setAllowGravity(false);
+      this.alfombra.body.setImmovable(true);
+      this.alfombra.setTexture("alfombra");
+      this.alfombra.body.setSize(46, 8);
+      this.colliderPlayerAlfombra = this.physics.add.collider(this.player, this.alfombra);
+      let alfombra2 = this.mapLevel.createFromObjects("objetos", {
+        name: "alfombra2"
+      })[0];
+      this.physics.world.enable(alfombra2);
+      alfombra2.body.setAllowGravity(false);
+      alfombra2.body.setImmovable(true);
+      alfombra2.setTexture("alfombra");
+      alfombra2.body.setSize(46, 8);
+      this.escalera = this.mapLevel.createFromObjects("objetos", {
+        name: "escaleras"
+      })[0];
+      this.physics.world.enable(this.escalera);
+      this.escalera.body.setAllowGravity(false);
+      this.escalera.body.setImmovable(true);
+      this.escalera.setTexture("escalera");
+      this.escalera.body.setSize(35, 35);
+      this.escalera.setVisible(false);
+      this.physics.add.overlap(this.player, this.escalera, () => {
+        this.escaleraText = this.add.bitmapText(this.escalera.x, this.escalera.y - 32, constants_default.FONTS.BITMAP, "SUBIR").setOrigin(0.5);
+        if (this.interactKey.isDown) {
+          this.player.y = 900;
+          this.player.x = this.player.x + 100;
+        }
+      });
+      this.events.on("useTaburete", () => {
+        this.taburete.body.setSize(22, 35);
+        this.physics.world.enable(this.taburete);
+        this.taburete.body.setAllowGravity(false);
+        this.taburete.body.setImmovable(true);
+        this.physics.add.collider(this.player, this.taburete);
+        this.taburete.setVisible(true);
+        this.taburete.x = 470;
+        this.taburete.y = 975;
+        this.player.x = this.taburete.x;
+        this.player.y = this.taburete.y - 100;
+        if (!this.player.inventory.find((item) => item.name === "escobilla")) {
+          this.newDialog("NO ALCANZO LA CUERDA");
+        }
+      });
+      this.events.on("useEscobilla", () => {
+        if (this.player.body.touching.down && this.taburete.body.touching.up) {
+          this.events.emit("deleteDialog");
+          this.player.x = 440;
+          this.player.y = 840;
+        }
+      });
+      const width = this.layerSuelo.width;
+      const height = this.layerSuelo.height;
+      this.rtFOV = this.make.renderTexture({
+        width,
+        height
+      }, true);
+      this.rtFOV.fill(0, 1);
+      this.rtFOV.draw(this.layerSuelo);
+      this.rtFOV.setTint(665928);
+      this.vision = this.make.image({
+        x: this.player.x,
+        y: this.player.y,
+        key: "fov",
+        add: false
+      });
+      this.vision.scale = 5;
+      this.rtFOV.mask = new Phaser.Display.Masks.BitmapMask(this, this.vision);
+      this.rtFOV.mask.invertAlpha = true;
+    }
+    newDialog(text) {
+      this.events.emit("newDialog", text);
+    }
+    createDoorInteractive(name) {
+      let obj = this.mapLevel.createFromObjects("puertas", {
+        name
+      })[0];
+      this.physics.world.enable(obj);
+      obj.body.setAllowGravity(false);
+      obj.body.setImmovable(true);
+      obj.setTexture("doorClose");
+      obj.body.setSize(16, 48);
+      const collider = this.physics.add.collider(obj, this.player);
+      this.doors.push({obj, collider});
     }
     createObjectInteractive(name, texture, textToolTip, objText, overlap) {
       let obj = this.mapLevel.createFromObjects("objetos", {
@@ -79693,6 +79870,15 @@
       obj.body.setAllowGravity(false);
       obj.setTexture(texture);
       obj.body.setSize(16, 16);
+      if (obj.name === "lapiz") {
+        this.lapiz = obj;
+      }
+      if (obj.name === "taburete") {
+        this.taburete = obj;
+      }
+      if (obj.name === "escobilla") {
+        this.escobilla = obj;
+      }
       this.physics.add.overlap(this.player, obj, () => {
         if (!overlap) {
           objText = this.add.bitmapText(obj.x, obj.y - 32, constants_default.FONTS.BITMAP, textToolTip).setOrigin(0.5);
@@ -79700,7 +79886,10 @@
         }
         if (this.interactKey.isDown) {
           if (this.player.addToInventory(obj)) {
-            obj.destroy();
+            if (obj.name === "lapiz") {
+              this.lapizTaken = true;
+            }
+            obj.setVisible(false);
             objText.destroy();
           }
         }
@@ -79708,11 +79897,51 @@
     }
     update() {
       this.player.update();
+      this.vision.x = this.player.x;
+      this.vision.y = this.player.y;
       this.numbersKeysArray.map((key, index) => {
         if (key.isDown) {
           this.player.setItem(index);
         }
       });
+      const overlap = this.physics.overlapRect(this.player.x - 25, this.player.y - 25, this.player.width + 5, this.player.height + 5);
+      this.doors.map(({obj, collider}) => {
+        if (overlap.includes(obj.body)) {
+          if (this.interactKey.isDown) {
+            if (obj.name === "puerta_4") {
+              this.finalScene();
+            }
+            if (obj.texture !== "doorOpen") {
+              this.sound.play("doorOpen");
+              obj.setTexture("doorOpen");
+            }
+            this.physics.world.removeCollider(collider);
+          }
+        }
+      });
+      if (this.lapizTaken) {
+        this.physics.add.overlap(this.player, this.mesa, () => {
+          if (this.interactKey.isDown) {
+            this.mesa.body.setVelocityX(10);
+            this.mesaMoved = true;
+          }
+        });
+      }
+      if (this.mesaMoved) {
+        if (overlap.includes(this.alfombra.body)) {
+          this.physics.world.removeCollider(this.colliderPlayerAlfombra);
+        }
+      }
+    }
+    finalScene() {
+      this.events.emit("hideHud");
+      setTimeout(() => {
+        this.sound.play("killSwitch");
+      }, 1e3);
+      setTimeout(() => {
+        this.sound.play("scream");
+      }, 3e3);
+      this.cameras.main.fadeOut(3500, 0, 0, 0);
     }
   };
   var MainScene_default = MainScene;
@@ -79730,6 +79959,8 @@
       this.screenCenterY = this.cameras.main.worldView.y + this.height / 2;
     }
     create() {
+      this.sound.play("soundtrack", {loop: true});
+      this.add.image(this.screenCenterX, this.screenCenterY - 150, "title");
       this.playTxt = this.add.bitmapText(this.screenCenterX, this.screenCenterY, constants_default.FONTS.BITMAP, "PLAY", 25).setOrigin(0.5).setInteractive({cursor: "pointer"});
       this.chageScene(this.playTxt, constants_default.SCENES.MAIN);
     }
@@ -79738,6 +79969,7 @@
         this.scene.start(scene);
         this.scene.start(constants_default.SCENES.HUD);
         this.scene.bringToTop(constants_default.SCENES.HUD);
+        this.sound.stopAll();
       });
     }
   };
@@ -79763,7 +79995,7 @@
       default: "arcade",
       arcade: {
         gravity: {y: 600},
-        debug: true
+        debug: false
       }
     },
     pixelArt: true,
